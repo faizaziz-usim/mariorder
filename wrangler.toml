@@ -1,0 +1,15 @@
+name = "mari-order"
+main = "src/index.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mari-order2"
+database_id = "40942a02-5c94-4a8c-9bbe-0d86b9a443d7"
+
+[vars]
+# ADMIN_PASSWORD diset melalui: npx wrangler secret put ADMIN_PASSWORD

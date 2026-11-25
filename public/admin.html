@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mari Order — Admin</title>
+<style>
+:root{--pri:#2563EB;--pri-l:#DBEAFE;--side:#1E293B;--side2:#334155;--bg:#F8FAFC;--card:#FFF;--txt:#0F172A;--txt2:#64748B;--ok:#22C55E;--warn:#F59E0B;--err:#EF4444;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt)}
+/* ─── LOGIN ─── */
+.login-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1E293B,#334155)}
+.login-box{background:#fff;padding:36px;border-radius:16px;width:360px;max-width:90vw;text-align:center}
+.login-box h1{font-size:1.5rem;margin-bottom:4px}
+.login-box p{color:var(--txt2);font-size:.88rem;margin-bottom:24px}
+.login-box input{width:100%;padding:12px 14px;border:2px solid #E2E8F0;border-radius:var(--r);font-size:1rem;margin-bottom:14px;outline:none}
+.login-box input:focus{border-color:var(--pri)}
+.login-box button{width:100%;padding:12px;border:none;border-radius:var(--r);background:var(--pri);color:#fff;font-size:1rem;font-weight:600;cursor:pointer}
+.login-box .err{color:var(--err);font-size:.85rem;margin-bottom:10px;display:none}
+/* ─── LAYOUT ─── */
+.app{display:none;min-height:100dvh}
+.app.show{display:flex}
+.sidebar{width:220px;background:var(--side);color:#CBD5E1;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;z-index:50}
+.sidebar h2{padding:20px;font-size:1.1rem;color:#fff;border-bottom:1px solid var(--side2)}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:12px 20px;border:none;background:none;color:#CBD5E1;font-size:.92rem;cursor:pointer;width:100%;text-align:left;transition:.15s}
+.nav-btn:hover,.nav-btn.active{background:var(--side2);color:#fff}
+.nav-btn .icon{font-size:1.1rem;width:24px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--side2)}
+.btn-logout{width:100%;padding:10px;border:none;border-radius:var(--r);background:var(--side2);color:#CBD5E1;cursor:pointer;font-size:.88rem}
+.main{flex:1;margin-left:220px;padding:24px 28px}
+.main h2{font-size:1.3rem;font-weight:700;margin-bottom:18px}
+.section{display:none}
+.section.show{display:block}
+/* ─── CARDS / TABLES ─── */
+.card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px;margin-bottom:14px}
+.btn{padding:8px 16px;border:none;border-radius:var(--r);cursor:pointer;font-size:.85rem;font-weight:600;transition:.15s}
+.btn-pri{background:var(--pri);color:#fff}.btn-pri:hover{opacity:.9}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-warn{background:var(--warn);color:#fff}
+.btn-err{background:var(--err);color:#fff}
+.btn-sm{padding:5px 10px;font-size:.8rem}
+.btn-ghost{background:none;border:1px solid #E2E8F0;color:var(--txt2)}.btn-ghost:hover{background:#F1F5F9}
+/* ─── ORDERS KANBAN ─── */
+.kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kanban-col h3{font-size:.88rem;font-weight:600;color:var(--txt2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.order-card{background:var(--card);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06);padding:14px;margin-bottom:10px;border-left:4px solid #E2E8F0}
+.order-card.pending{border-color:var(--warn)}
+.order-card.preparing{border-color:var(--pri)}
+.order-card.ready{border-color:var(--ok)}
+.order-card.completed{border-color:#94A3B8}
+.order-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.order-num{font-weight:800;font-size:1.05rem}
+.order-type{font-size:.75rem;padding:2px 8px;border-radius:10px;font-weight:600}
+.order-type.dine_in{background:#DBEAFE;color:#1D4ED8}
+.order-type.takeaway{background:#FEF3C7;color:#92400E}
+.order-items{font-size:.85rem;color:var(--txt2);margin-bottom:8px;line-height:1.5}
+.order-total{font-weight:700;font-size:.92rem;margin-bottom:8px}
+.order-time{font-size:.75rem;color:#94A3B8}
+/* ─── MENU TABLE ─── */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--r);overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+th,td{padding:10px 14px;text-align:left;font-size:.88rem}
+th{background:#F8FAFC;font-weight:600;color:var(--txt2);border-bottom:2px solid #E2E8F0}
+td{border-bottom:1px solid #F1F5F9}
+tr:hover td{background:#FAFAFA}
+.thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#F1F5F9}
+.thumb-emoji{width:40px;height:40px;border-radius:8px;background:#F1F5F9;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.toggle{cursor:pointer;width:44px;height:24px;border-radius:12px;border:none;position:relative;transition:.2s}
+.toggle.on{background:var(--ok)}.toggle.off{background:#CBD5E1}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.toggle.on::after{left:22px}
+.price-input{width:80px;padding:4px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:.88rem;text-align:right}
+.actions{display:flex;gap:4px}
+/* ─── FORM MODAL ─── */
+.fm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:600;display:none;align-items:center;justify-content:center}
+.fm-overlay.show{display:flex}
+.fm{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:92vw;max-height:85dvh;overflow-y:auto}
+.fm h3{font-size:1.1rem;font-weight:700;margin-bottom:16px}
+.fm label{display:block;font-size:.85rem;font-weight:600;margin-bottom:4px;color:var(--txt2)}
+.fm input,.fm select,.fm textarea{width:100%;padding:10px 12px;border:2px solid #E2E8F0;border-radius:8px;font-size:.92rem;margin-bottom:12px;outline:none;font-family:inherit}
+.fm input:focus,.fm select:focus,.fm textarea:focus{border-color:var(--pri)}
+.fm textarea{resize:vertical;min-height:60px}
+.fm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.img-preview{width:100px;height:100px;border-radius:var(--r);object-fit:cover;margin-bottom:8px;background:#F1F5F9;display:none}
+.img-info{font-size:.78rem;color:var(--txt2);margin-bottom:12px}
+/* ─── SETTINGS ─── */
+.setting-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.setting-row label{min-width:120px;font-weight:600;font-size:.92rem}
+.setting-row input{flex:1;padding:10px 12px;border:2px solid #E2E8F0;border-radius:8px;font-size:.92rem}
+/* ─── TOAST ─── */
+.toast{position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:var(--r);color:#fff;font-weight:600;font-size:.9rem;z-index:999;transform:translateX(120%);transition:transform .3s}
+.toast.show{transform:translateX(0)}
+.toast.ok{background:var(--ok)}.toast.err{background:var(--err)}
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  .sidebar{width:60px}.sidebar h2,.nav-btn span:not(.icon),.sidebar-footer .btn-logout{display:none}
+  .nav-btn{justify-content:center;padding:14px}
+  .main{margin-left:60px;padding:16px}
+  .kanban{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <h1>🏪 Mari Order</h1>
+    <p>Panel Admin CMS</p>
+    <div class="err" id="loginErr"></div>
+    <input type="password" id="pwInput" placeholder="Kata laluan admin" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Log Masuk</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <aside class="sidebar">
+    <h2>🏪 Admin</h2>
+    <button class="nav-btn active" onclick="showTab('orders',this)"><span class="icon">📋</span><span>Pesanan</span></button>
+    <button class="nav-btn" onclick="showTab('menu',this)"><span class="icon">🍽️</span><span>Menu</span></button>
+    <button class="nav-btn" onclick="showTab('cats',this)"><span class="icon">📁</span><span>Kategori</span></button>
+    <button class="nav-btn" onclick="showTab('settings',this)"><span class="icon">⚙️</span><span>Tetapan</span></button>
+    <div class="sidebar-footer"><button class="btn-logout" onclick="logout()">Log Keluar</button></div>
+  </aside>
+  <div class="main">
+
+    <!-- PESANAN -->
+    <div class="section show" id="sec-orders">
+      <h2>📋 Pesanan Dapur</h2>
+      <div class="toolbar"><button class="btn btn-pri" onclick="loadOrders()">🔄 Muat Semula</button></div>
+      <div class="kanban" id="kanban"></div>
+    </div>
+
+    <!-- MENU -->
+    <div class="section" id="sec-menu">
+      <h2>🍽️ Urus Menu</h2>
+      <div class="toolbar">
+        <button class="btn btn-pri" onclick="openItemForm()">+ Tambah Item</button>
+        <button class="btn btn-ghost" onclick="loadMenu()">🔄 Muat Semula</button>
+      </div>
+      <table>
+        <thead><tr><th></th><th>Nama</th><th>Kategori</th><th>Harga (RM)</th><th>Aktif</th><th>Tindakan</th></tr></thead>
+        <tbody id="menuBody"></tbody>
+      </table>
+    </div>
+
+    <!-- KATEGORI -->
+    <div class="section" id="sec-cats">
+      <h2>📁 Urus Kategori</h2>
+      <div class="toolbar">
+        <button class="btn btn-pri" onclick="openCatForm()">+ Tambah Kategori</button>
+        <button class="btn btn-ghost" onclick="loadCats()">🔄 Muat Semula</button>
+      </div>
+      <table>
+        <thead><tr><th>Emoji</th><th>Nama</th><th>Urutan</th><th>Aktif</th><th>Tindakan</th></tr></thead>
+        <tbody id="catBody"></tbody>
+      </table>
+    </div>
+
+    <!-- TETAPAN -->
+    <div class="section" id="sec-settings">
+      <h2>⚙️ Tetapan Kedai</h2>
+      <div class="card">
+        <div class="setting-row"><label>Nama Kedai</label><input id="sName" placeholder="Nama kedai"></div>
+        <div class="setting-row"><label>Teks Banner</label><input id="sBanner" placeholder="Teks banner"></div>
+        <div class="setting-row">
+          <label>Kedai Dibuka</label>
+          <button class="toggle on" id="sOpen" onclick="toggleOpen()"></button>
+        </div>
+        <button class="btn btn-pri" onclick="saveSettings()">💾 Simpan Tetapan</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ITEM FORM MODAL -->
+<div class="fm-overlay" id="itemModal">
+  <div class="fm">
+    <h3 id="itemFormTitle">Tambah Item</h3>
+    <input type="hidden" id="itemId">
+    <label>Nama</label><input id="iName" placeholder="Nama item">
+    <label>Penerangan</label><textarea id="iDesc" placeholder="Penerangan ringkas"></textarea>
+    <label>Kategori</label><select id="iCat"></select>
+    <label>Harga (RM)</label><input id="iPrice" type="number" step="0.10" min="0" placeholder="0.00">
+    <label>Emoji</label><input id="iEmoji" placeholder="🍽️">
+    <label>Gambar (maks 480px, &lt; 95 KB)</label>
+    <img class="img-preview" id="iImgPreview">
+    <div class="img-info" id="iImgInfo"></div>
+    <input type="file" id="iFile" accept="image/*" onchange="previewImg(this)">
+    <input type="hidden" id="iImageId">
+    <div class="fm-actions">
+      <button class="btn btn-ghost" onclick="closeItemForm()">Batal</button>
+      <button class="btn btn-pri" id="itemSaveBtn" onclick="saveItem()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY FORM MODAL -->
+<div class="fm-overlay" id="catModal">
+  <div class="fm">
+    <h3 id="catFormTitle">Tambah Kategori</h3>
+    <input type="hidden" id="catEditId">
+    <label>Nama</label><input id="cName" placeholder="Nama kategori">
+    <label>Emoji</label><input id="cEmoji" placeholder="📁">
+    <label>Urutan</label><input id="cSort" type="number" placeholder="0">
+    <div class="fm-actions">
+      <button class="btn btn-ghost" onclick="closeCatForm()">Batal</button>
+      <button class="btn btn-pri" onclick="saveCat()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── STATE ─── */
+let token = localStorage.getItem('mo_token') || '';
+let allMenu = [], allCats = [];
+let orderPoll = null;
+
+const $ = id => document.getElementById(id);
+
+function api(path, opts = {}) {
+  opts.headers = { ...opts.headers, 'Authorization': `Bearer ${token}` };
+  return fetch(path, opts);
+}
+function toast(msg, type = 'ok') {
+  const t = $('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ─── LOGIN ─── */
+async function doLogin() {
+  const pw = $('pwInput').value;
+  const r = await fetch('/api/admin/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: pw }),
+  });
+  const d = await r.json();
+  if (!r.ok) {
+    $('loginErr').textContent = d.error;
+    $('loginErr').style.display = 'block';
+    return;
+  }
+  token = d.token;
+  localStorage.setItem('mo_token', token);
+  enterApp();
+}
+
+function enterApp() {
+  $('loginWrap').style.display = 'none';
+  $('app').classList.add('show');
+  loadOrders(); loadMenu(); loadCats(); loadSettings();
+  orderPoll = setInterval(loadOrders, 10000);
+}
+
+function logout() {
+  token = ''; localStorage.removeItem('mo_token');
+  if (orderPoll) clearInterval(orderPoll);
+  location.reload();
+}
+
+// Auto-login jika ada token
+if (token) {
+  api('/api/settings').then(r => { if (r.ok) enterApp(); else { token = ''; localStorage.removeItem('mo_token'); } });
+}
+
+/* ─── TAB NAV ─── */
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('show'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $(`sec-${id}`).classList.add('show');
+  el.classList.add('active');
+}
+
+/* ═══════════════════ ORDERS ═══════════════════ */
+async function loadOrders() {
+  const r = await api('/api/orders');
+  if (!r.ok) return;
+  const orders = await r.json();
+
+  const cols = { pending: [], preparing: [], ready: [], completed: [] };
+  const colNames = { pending: '⏳ Baru', preparing: '👨‍🍳 Sedang Disediakan', ready: '✅ Siap', completed: '📦 Selesai' };
+
+  orders.forEach(o => { if (cols[o.status]) cols[o.status].push(o); });
+
+  $('kanban').innerHTML = Object.keys(cols).map(s => `
+    <div class="kanban-col">
+      <h3>${colNames[s]} (${cols[s].length})</h3>
+      ${cols[s].map(o => {
+        const next = { pending: 'preparing', preparing: 'ready', ready: 'completed' }[s];
+        const nextLabel = { preparing: '👨‍🍳 Mula Sediakan', ready: '✅ Siap', completed: '📦 Selesai' }[next] || '';
+        const time = o.created_at ? new Date(o.created_at + 'Z').toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '';
+        return `<div class="order-card ${s}">
+          <div class="order-head">
+            <span class="order-num">#${String(o.queue_number).padStart(4, '0')}</span>
+            <span class="order-type ${o.order_type}">${o.order_type === 'dine_in' ? 'Makan Sini' : 'Bungkus'}</span>
+          </div>
+          <div class="order-items">${(o.items || []).map(i => `${i.quantity}× ${i.name}`).join('<br>')}</div>
+          <div class="order-total">RM ${Number(o.total_price).toFixed(2)}</div>
+          <div class="order-time">${time}</div>
+          ${next ? `<button class="btn btn-sm ${next === 'preparing' ? 'btn-pri' : next === 'ready' ? 'btn-ok' : 'btn-ghost'}" onclick="updateOrder(${o.id},'${next}')">${nextLabel}</button>` : ''}
+          ${s !== 'completed' ? `<button class="btn btn-sm btn-err" style="margin-top:4px" onclick="updateOrder(${o.id},'cancelled')">❌ Batal</button>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+async function updateOrder(id, status) {
+  await api(`/api/orders/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  });
+  toast('Pesanan dikemas kini');
+  loadOrders();
+}
+
+/* ═══════════════════ MENU ═══════════════════ */
+async function loadMenu() {
+  const r = await api('/api/menu?all=1');
+  allMenu = await r.json();
+  renderMenuTable();
+}
+
+function renderMenuTable() {
+  const catMap = {};
+  allCats.forEach(c => catMap[c.id] = c.name);
+
+  $('menuBody').innerHTML = allMenu.map(m => {
+    const imgHtml = m.image_id
+      ? `<img class="thumb" src="/api/images/${m.image_id}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="thumb-emoji" style="display:none">${m.emoji}</div>`
+      : `<div class="thumb-emoji">${m.emoji}</div>`;
+    return `<tr>
+      <td>${imgHtml}</td>
+      <td><strong>${m.name}</strong><br><small style="color:var(--txt2)">${m.description || ''}</small></td>
+      <td>${catMap[m.category_id] || '-'}</td>
+      <td><input class="price-input" value="${Number(m.price).toFixed(2)}" onchange="quickPrice(${m.id},this.value)"></td>
+      <td><button class="toggle ${m.active ? 'on' : 'off'}" onclick="toggleItem(${m.id})"></button></td>
+      <td class="actions">
+        <button class="btn btn-sm btn-ghost" onclick="editItem(${m.id})" title="Edit">✏️</button>
+        <button class="btn btn-sm btn-ghost" onclick="copyItem(${m.id})" title="Salin">📋</button>
+        <button class="btn btn-sm btn-err" onclick="delItem(${m.id})" title="Padam">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function quickPrice(id, val) {
+  const price = parseFloat(val);
+  if (isNaN(price) || price < 0) { toast('Harga tidak sah', 'err'); loadMenu(); return; }
+  await api(`/api/menu/${id}/price`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ price }),
+  });
+  toast('Harga dikemas kini');
+  loadMenu();
+}
+
+async function toggleItem(id) {
+  await api(`/api/menu/${id}/toggle`, { method: 'PATCH' });
+  loadMenu();
+}
+
+async function copyItem(id) {
+  await api(`/api/menu/${id}/copy`, { method: 'POST' });
+  toast('Item disalin');
+  loadMenu();
+}
+
+async function delItem(id) {
+  if (!confirm('Padam item ini?')) return;
+  await api(`/api/menu/${id}`, { method: 'DELETE' });
+  toast('Item dipadam');
+  loadMenu();
+}
+
+/* ─── ITEM FORM ─── */
+function openItemForm(item) {
+  $('itemFormTitle').textContent = item ? 'Edit Item' : 'Tambah Item';
+  $('itemId').value = item ? item.id : '';
+  $('iName').value = item ? item.name : '';
+  $('iDesc').value = item ? item.description || '' : '';
+  $('iPrice').value = item ? item.price : '';
+  $('iEmoji').value = item ? item.emoji : '🍽️';
+  $('iImageId').value = item && item.image_id ? item.image_id : '';
+  $('iFile').value = '';
+  $('iImgInfo').textContent = '';
+  if (item && item.image_id) {
+    $('iImgPreview').src = `/api/images/${item.image_id}`;
+    $('iImgPreview').style.display = 'block';
+  } else {
+    $('iImgPreview').style.display = 'none';
+  }
+
+  // Populate category dropdown
+  $('iCat').innerHTML = allCats.map(c => `<option value="${c.id}" ${item && item.category_id === c.id ? 'selected' : ''}>${c.emoji} ${c.name}</option>`).join('');
+
+  $('itemModal').classList.add('show');
+}
+function closeItemForm() { $('itemModal').classList.remove('show'); }
+
+function editItem(id) {
+  const item = allMenu.find(m => m.id === id);
+  if (item) openItemForm(item);
+}
+
+/* ─── IMAGE COMPRESS (<canvas> max 480px, latar putih, < 95 KB) ─── */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const MAX = 480;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        // Latar putih untuk PNG transparent
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        let quality = 0.82;
+        const tryCompress = () => {
+          canvas.toBlob(blob => {
+            if (!blob) { reject(new Error('Gagal compress')); return; }
+            if (blob.size > 95 * 1024 && quality > 0.15) {
+              quality -= 0.08;
+              tryCompress();
+            } else {
+              resolve(blob);
+            }
+          }, 'image/jpeg', quality);
+        };
+        tryCompress();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function previewImg(input) {
+  if (!input.files[0]) return;
+  try {
+    const blob = await compressImage(input.files[0]);
+    const url = URL.createObjectURL(blob);
+    $('iImgPreview').src = url;
+    $('iImgPreview').style.display = 'block';
+    $('iImgInfo').textContent = `Saiz: ${(blob.size / 1024).toFixed(1)} KB`;
+    // Upload immediately
+    const buffer = await blob.arrayBuffer();
+    const r = await api('/api/images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: buffer,
+    });
+    const d = await r.json();
+    if (r.ok) {
+      $('iImageId').value = d.id;
+      $('iImgInfo').textContent += ' ✅ Dimuat naik';
+    } else {
+      $('iImgInfo').textContent += ' ❌ Gagal muat naik';
+    }
+  } catch (e) {
+    $('iImgInfo').textContent = '❌ Gagal memproses gambar';
+  }
+}
+
+async function saveItem() {
+  const id = $('itemId').value;
+  const body = {
+    name: $('iName').value.trim(),
+    description: $('iDesc').value.trim(),
+    category_id: parseInt($('iCat').value),
+    price: parseFloat($('iPrice').value),
+    emoji: $('iEmoji').value.trim() || '🍽️',
+    image_id: $('iImageId').value ? parseInt($('iImageId').value) : null,
+  };
+  if (!body.name || isNaN(body.price)) { toast('Sila isi nama & harga', 'err'); return; }
+
+  const url = id ? `/api/menu/${id}` : '/api/menu';
+  const method = id ? 'PUT' : 'POST';
+  const r = await api(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (r.ok) {
+    toast(id ? 'Item dikemas kini' : 'Item ditambah');
+    closeItemForm();
+    loadMenu();
+  } else {
+    const d = await r.json();
+    toast(d.error || 'Gagal', 'err');
+  }
+}
+
+/* ═══════════════════ CATEGORIES ═══════════════════ */
+async function loadCats() {
+  const r = await api('/api/categories?all=1');
+  allCats = await r.json();
+  renderCatTable();
+}
+
+function renderCatTable() {
+  $('catBody').innerHTML = allCats.map(c => `<tr>
+    <td style="font-size:1.5rem">${c.emoji}</td>
+    <td><strong>${c.name}</strong></td>
+    <td>${c.sort_order}</td>
+    <td><button class="toggle ${c.active ? 'on' : 'off'}" onclick="toggleCat(${c.id})"></button></td>
+    <td class="actions">
+      <button class="btn btn-sm btn-ghost" onclick="editCat(${c.id})">✏️</button>
+      <button class="btn btn-sm btn-err" onclick="delCat(${c.id})">🗑️</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function toggleCat(id) {
+  await api(`/api/categories/${id}/toggle`, { method: 'PATCH' });
+  loadCats();
+}
+
+async function delCat(id) {
+  if (!confirm('Padam kategori ini?')) return;
+  const r = await api(`/api/categories/${id}`, { method: 'DELETE' });
+  if (r.ok) { toast('Kategori dipadam'); loadCats(); }
+  else {
+    const d = await r.json();
+    toast(d.error || 'Gagal padam', 'err');
+  }
+}
+
+/* ─── CATEGORY FORM ─── */
+function openCatForm(cat) {
+  $('catFormTitle').textContent = cat ? 'Edit Kategori' : 'Tambah Kategori';
+  $('catEditId').value = cat ? cat.id : '';
+  $('cName').value = cat ? cat.name : '';
+  $('cEmoji').value = cat ? cat.emoji : '📁';
+  $('cSort').value = cat ? cat.sort_order : 0;
+  $('catModal').classList.add('show');
+}
+function closeCatForm() { $('catModal').classList.remove('show'); }
+
+function editCat(id) {
+  const cat = allCats.find(c => c.id === id);
+  if (cat) openCatForm(cat);
+}
+
+async function saveCat() {
+  const id = $('catEditId').value;
+  const body = {
+    name: $('cName').value.trim(),
+    emoji: $('cEmoji').value.trim() || '📁',
+    sort_order: parseInt($('cSort').value) || 0,
+  };
+  if (!body.name) { toast('Sila isi nama', 'err'); return; }
+
+  const url = id ? `/api/categories/${id}` : '/api/categories';
+  const method = id ? 'PUT' : 'POST';
+  const r = await api(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (r.ok) {
+    toast(id ? 'Kategori dikemas kini' : 'Kategori ditambah');
+    closeCatForm();
+    loadCats();
+  } else {
+    const d = await r.json();
+    toast(d.error || 'Gagal', 'err');
+  }
+}
+
+/* ═══════════════════ SETTINGS ═══════════════════ */
+async function loadSettings() {
+  const r = await api('/api/settings');
+  const s = await r.json();
+  $('sName').value = s.store_name || '';
+  $('sBanner').value = s.banner || '';
+  const isOpen = s.is_open === '1';
+  $('sOpen').className = `toggle ${isOpen ? 'on' : 'off'}`;
+  $('sOpen').dataset.val = isOpen ? '1' : '0';
+}
+
+function toggleOpen() {
+  const btn = $('sOpen');
+  const v = btn.dataset.val === '1' ? '0' : '1';
+  btn.dataset.val = v;
+  btn.className = `toggle ${v === '1' ? 'on' : 'off'}`;
+}
+
+async function saveSettings() {
+  const body = {
+    store_name: $('sName').value.trim(),
+    banner: $('sBanner').value.trim(),
+    is_open: $('sOpen').dataset.val,
+  };
+  const r = await api('/api/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (r.ok) toast('Tetapan disimpan');
+  else toast('Gagal simpan', 'err');
+}
+</script>
+</body>
+</html>

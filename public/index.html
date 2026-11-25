@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Mari Order</title>
+<style>
+:root{--pri:#F97316;--pri-l:#FFF7ED;--pri-d:#EA580C;--bg:#FFFBF5;--card:#FFF;--txt:#1C1917;--txt2:#78716C;--ok:#22C55E;--err:#EF4444;--blue:#3B82F6;--r:14px;--sh:0 2px 12px rgba(0,0,0,.07)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden;min-height:100dvh}
+/* ─── HEADER ─── */
+.header{background:linear-gradient(135deg,var(--pri),var(--pri-d));color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header h1{font-size:1.4rem;font-weight:800;letter-spacing:-.5px}
+.header .banner{font-size:.82rem;opacity:.9;margin-top:2px}
+.badge-open{background:#22C55E;color:#fff;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+.badge-closed{background:#EF4444;color:#fff;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
+/* ─── CATEGORIES ─── */
+.cats{display:flex;gap:8px;padding:14px 20px;overflow-x:auto;scrollbar-width:none;position:sticky;top:68px;z-index:90;background:var(--bg)}
+.cats::-webkit-scrollbar{display:none}
+.cat-btn{white-space:nowrap;padding:8px 18px;border-radius:24px;border:2px solid #E5E5E5;background:#fff;font-size:.88rem;font-weight:600;cursor:pointer;transition:.2s;flex-shrink:0}
+.cat-btn.active{background:var(--pri);color:#fff;border-color:var(--pri)}
+/* ─── MENU GRID ─── */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;padding:6px 20px 120px}
+.menu-card{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s}
+.menu-card:active{transform:scale(.97)}
+.card-img{width:100%;aspect-ratio:1;object-fit:cover;background:#F5F5F4;display:block}
+.card-emoji{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:3.5rem;background:#F5F5F4}
+.card-body{padding:10px 12px 12px;flex:1;display:flex;flex-direction:column}
+.card-name{font-weight:700;font-size:.92rem;margin-bottom:2px;line-height:1.2}
+.card-desc{font-size:.75rem;color:var(--txt2);margin-bottom:6px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.card-price{font-weight:800;color:var(--pri-d);font-size:.95rem}
+.qty-ctrl{display:flex;align-items:center;gap:0}
+.qty-btn{width:30px;height:30px;border:none;border-radius:50%;font-size:1.1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.qty-btn.minus{background:#FEE2E2;color:var(--err)}
+.qty-btn.plus{background:#DCFCE7;color:#166534}
+.qty-val{width:28px;text-align:center;font-weight:700;font-size:.95rem}
+/* ─── CART BAR ─── */
+.cart-bar{position:fixed;bottom:0;left:0;right:0;background:var(--pri);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;z-index:200;transition:transform .3s}
+.cart-bar.hidden{transform:translateY(100%)}
+.cart-info{display:flex;align-items:center;gap:10px}
+.cart-count{background:#fff;color:var(--pri);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem}
+.cart-total{font-weight:800;font-size:1.1rem}
+/* ─── MODAL OVERLAY ─── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;max-height:85dvh;display:flex;flex-direction:column;animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-head{padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.modal-head h2{font-size:1.2rem;font-weight:800}
+.modal-close{width:36px;height:36px;border:none;background:#F5F5F4;border-radius:50%;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-body{flex:1;overflow-y:auto;padding:16px 20px}
+.cart-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #F5F5F4}
+.cart-item-info{flex:1}
+.cart-item-name{font-weight:600;font-size:.92rem}
+.cart-item-meta{font-size:.82rem;color:var(--txt2)}
+.cart-item-price{font-weight:700;color:var(--pri-d);min-width:70px;text-align:right}
+.cart-item-del{width:32px;height:32px;border:none;background:#FEE2E2;color:var(--err);border-radius:8px;cursor:pointer;font-size:1rem}
+.modal-footer{padding:14px 20px 20px;border-top:1px solid #F5F5F4}
+.order-type{display:flex;gap:10px;margin-bottom:14px}
+.type-btn{flex:1;padding:12px;border:2px solid #E5E5E5;border-radius:12px;background:#fff;font-size:.9rem;font-weight:600;cursor:pointer;text-align:center;transition:.2s}
+.type-btn.active{border-color:var(--pri);background:var(--pri-l);color:var(--pri-d)}
+.total-row{display:flex;justify-content:space-between;font-weight:800;font-size:1.15rem;margin-bottom:14px}
+.btn-submit{width:100%;padding:14px;border:none;border-radius:12px;background:var(--pri);color:#fff;font-size:1.05rem;font-weight:700;cursor:pointer;transition:.15s}
+.btn-submit:active{background:var(--pri-d)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+/* ─── QUEUE / STATUS SCREEN ─── */
+.queue-screen{position:fixed;inset:0;background:linear-gradient(160deg,#FFF7ED,#FFFBF5);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px}
+.queue-screen.show{display:flex}
+.queue-icon{font-size:4rem;margin-bottom:12px}
+.queue-title{font-size:1.3rem;font-weight:700;color:var(--txt2);margin-bottom:4px}
+.queue-num{font-size:5rem;font-weight:900;color:var(--pri);margin:8px 0 20px;line-height:1}
+.queue-type{display:inline-block;padding:6px 16px;border-radius:20px;font-size:.88rem;font-weight:600;margin-bottom:20px}
+.queue-type.dine_in{background:#DBEAFE;color:#1D4ED8}
+.queue-type.takeaway{background:#FEF3C7;color:#92400E}
+.status-badge{font-size:1rem;font-weight:600;padding:8px 20px;border-radius:20px;margin-bottom:30px}
+.status-pending{background:#FEF3C7;color:#92400E}
+.status-preparing{background:#DBEAFE;color:#1D4ED8}
+.status-ready{background:#DCFCE7;color:#166534;animation:pulse 1.5s infinite}
+.status-completed{background:#F5F5F4;color:var(--txt2)}
+.status-cancelled{background:#FEE2E2;color:#991B1B}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.btn-new{padding:14px 40px;border:none;border-radius:12px;background:var(--pri);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+/* ─── CLOSED OVERLAY ─── */
+.closed-screen{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;text-align:center;flex-direction:column;color:#fff}
+.closed-screen.show{display:flex}
+.closed-screen .icon{font-size:5rem;margin-bottom:16px}
+.closed-screen h2{font-size:2rem;font-weight:800;margin-bottom:8px}
+.closed-screen p{font-size:1.1rem;opacity:.8}
+/* ─── EMPTY ─── */
+.empty{text-align:center;padding:60px 20px;color:var(--txt2)}
+.empty .icon{font-size:3rem;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <h1 id="storeName">Mari Order</h1>
+    <div class="banner" id="banner"></div>
+  </div>
+  <span id="statusBadge" class="badge-open">Dibuka</span>
+</header>
+
+<nav class="cats" id="cats"></nav>
+<main class="menu-grid" id="menuGrid"></main>
+
+<!-- Cart Bar -->
+<div class="cart-bar hidden" id="cartBar" onclick="openCart()">
+  <div class="cart-info">
+    <span class="cart-count" id="cartCount">0</span>
+    <span>🛒 Troli</span>
+  </div>
+  <span class="cart-total" id="cartTotal">RM 0.00</span>
+</div>
+
+<!-- Cart Modal -->
+<div class="overlay" id="cartOverlay" onclick="if(event.target===this)closeCart()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🛒 Troli Anda</h2>
+      <button class="modal-close" onclick="closeCart()">✕</button>
+    </div>
+    <div class="modal-body" id="cartItems"></div>
+    <div class="modal-footer">
+      <div class="order-type">
+        <button class="type-btn active" data-type="dine_in" onclick="setType('dine_in',this)">🍽️ Makan Sini</button>
+        <button class="type-btn" data-type="takeaway" onclick="setType('takeaway',this)">🥡 Bungkus</button>
+      </div>
+      <div class="total-row"><span>Jumlah</span><span id="cartModalTotal">RM 0.00</span></div>
+      <button class="btn-submit" id="btnSubmit" onclick="submitOrder()">Hantar Pesanan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Queue Screen -->
+<div class="queue-screen" id="queueScreen">
+  <div class="queue-icon" id="queueIcon">✅</div>
+  <div class="queue-title">Nombor Giliran Anda</div>
+  <div class="queue-num" id="queueNum">#0001</div>
+  <div class="queue-type dine_in" id="queueType">Makan Sini</div>
+  <div class="status-badge status-pending" id="queueStatus">Menunggu</div>
+  <button class="btn-new" onclick="newOrder()">Pesanan Baru</button>
+</div>
+
+<!-- Closed Overlay -->
+<div class="closed-screen" id="closedScreen">
+  <div class="icon">🔒</div>
+  <h2>Kedai Tutup</h2>
+  <p>Sila datang lagi 🙏</p>
+</div>
+
+<script>
+/* ─── STATE ─── */
+let menu = [], categories = [], cart = {}, orderType = 'dine_in', activeCat = 0;
+let pollTimer = null;
+
+const $ = id => document.getElementById(id);
+const RM = v => `RM ${Number(v).toFixed(2)}`;
+
+/* ─── INIT ─── */
+async function init() {
+  const [cats, items, settings] = await Promise.all([
+    fetch('/api/categories').then(r => r.json()),
+    fetch('/api/menu').then(r => r.json()),
+    fetch('/api/settings').then(r => r.json()),
+  ]);
+  categories = cats;
+  menu = items;
+
+  $('storeName').textContent = settings.store_name || 'Mari Order';
+  $('banner').textContent = settings.banner || '';
+  if (settings.is_open !== '1') {
+    $('statusBadge').textContent = 'Tutup';
+    $('statusBadge').className = 'badge-closed';
+    $('closedScreen').classList.add('show');
+  }
+
+  renderCats();
+  renderMenu();
+}
+
+/* ─── RENDER CATEGORIES ─── */
+function renderCats() {
+  let html = `<button class="cat-btn active" onclick="filterCat(0,this)">Semua</button>`;
+  categories.forEach(c => {
+    html += `<button class="cat-btn" onclick="filterCat(${c.id},this)">${c.emoji} ${c.name}</button>`;
+  });
+  $('cats').innerHTML = html;
+}
+
+function filterCat(id, el) {
+  activeCat = id;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderMenu();
+}
+
+/* ─── RENDER MENU ─── */
+function renderMenu() {
+  const items = activeCat === 0 ? menu : menu.filter(m => m.category_id === activeCat);
+  if (!items.length) {
+    $('menuGrid').innerHTML = '<div class="empty"><div class="icon">🍽️</div>Tiada item dalam kategori ini</div>';
+    return;
+  }
+  $('menuGrid').innerHTML = items.map(m => {
+    const qty = cart[m.id]?.qty || 0;
+    const imgHtml = m.image_id
+      ? `<img class="card-img" src="/api/images/${m.image_id}" alt="${m.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="card-emoji" style="display:none">${m.emoji}</div>`
+      : `<div class="card-emoji">${m.emoji}</div>`;
+    return `<div class="menu-card">
+      ${imgHtml}
+      <div class="card-body">
+        <div class="card-name">${m.name}</div>
+        <div class="card-desc">${m.description}</div>
+        <div class="card-bottom">
+          <span class="card-price">${RM(m.price)}</span>
+          <div class="qty-ctrl">
+            ${qty > 0 ? `<button class="qty-btn minus" onclick="addToCart(${m.id},-1)">−</button><span class="qty-val">${qty}</span>` : ''}
+            <button class="qty-btn plus" onclick="addToCart(${m.id},1)">+</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ─── CART LOGIC ─── */
+function addToCart(id, delta) {
+  const item = menu.find(m => m.id === id);
+  if (!item) return;
+  if (!cart[id]) cart[id] = { ...item, qty: 0 };
+  cart[id].qty = Math.max(0, cart[id].qty + delta);
+  if (cart[id].qty === 0) delete cart[id];
+  updateCartBar();
+  renderMenu();
+}
+
+function updateCartBar() {
+  const entries = Object.values(cart);
+  const count = entries.reduce((s, i) => s + i.qty, 0);
+  const total = entries.reduce((s, i) => s + i.price * i.qty, 0);
+  $('cartCount').textContent = count;
+  $('cartTotal').textContent = RM(total);
+  $('cartModalTotal').textContent = RM(total);
+  $('cartBar').classList.toggle('hidden', count === 0);
+}
+
+/* ─── CART MODAL ─── */
+function openCart() {
+  const entries = Object.values(cart);
+  $('cartItems').innerHTML = entries.map(i => `
+    <div class="cart-item">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${i.emoji} ${i.name}</div>
+        <div class="cart-item-meta">x${i.qty} · ${RM(i.price)} setiap satu</div>
+      </div>
+      <div class="cart-item-price">${RM(i.price * i.qty)}</div>
+      <button class="cart-item-del" onclick="removeCart(${i.id})">🗑️</button>
+    </div>
+  `).join('');
+  $('cartOverlay').classList.add('show');
+}
+function closeCart() { $('cartOverlay').classList.remove('show'); }
+function removeCart(id) { delete cart[id]; updateCartBar(); openCart(); if (!Object.keys(cart).length) closeCart(); }
+function setType(t, el) {
+  orderType = t;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ─── SUBMIT ORDER ─── */
+async function submitOrder() {
+  const entries = Object.values(cart);
+  if (!entries.length) return;
+  $('btnSubmit').disabled = true;
+  $('btnSubmit').textContent = 'Menghantar…';
+  try {
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: entries.map(i => ({ id: i.id, quantity: i.qty })),
+        order_type: orderType,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Gagal menghantar pesanan'); return; }
+    closeCart();
+    showQueue(data);
+  } catch (e) { alert('Ralat rangkaian'); } finally {
+    $('btnSubmit').disabled = false;
+    $('btnSubmit').textContent = 'Hantar Pesanan';
+  }
+}
+
+/* ─── QUEUE SCREEN ─── */
+const statusText = { pending:'Menunggu', preparing:'Sedang Disediakan 👨‍🍳', ready:'Sedia Untuk Diambil! 🎉', completed:'Selesai ✅', cancelled:'Dibatalkan ❌' };
+const statusIcon = { pending:'⏳', preparing:'👨‍🍳', ready:'🎉', completed:'✅', cancelled:'❌' };
+
+function showQueue(order) {
+  $('queueNum').textContent = `#${String(order.queue_number).padStart(4,'0')}`;
+  $('queueIcon').textContent = statusIcon[order.status] || '⏳';
+  $('queueType').textContent = order.order_type === 'dine_in' ? '🍽️ Makan Sini' : '🥡 Bungkus';
+  $('queueType').className = `queue-type ${order.order_type}`;
+  updateStatus(order.status);
+  $('queueScreen').classList.add('show');
+
+  // Poll status
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const r = await fetch(`/api/orders/${order.id}`);
+      const d = await r.json();
+      updateStatus(d.status);
+      if (d.status === 'ready' || d.status === 'completed' || d.status === 'cancelled') {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    } catch (e) {}
+  }, 5000);
+}
+
+function updateStatus(s) {
+  $('queueStatus').textContent = statusText[s] || s;
+  $('queueStatus').className = `status-badge status-${s}`;
+  $('queueIcon').textContent = statusIcon[s] || '⏳';
+}
+
+function newOrder() {
+  if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  cart = {};
+  updateCartBar();
+  renderMenu();
+  $('queueScreen').classList.remove('show');
+}
+
+/* ─── START ─── */
+init();
+// Auto-refresh settings setiap 30s untuk detect kedai tutup/buka
+setInterval(async () => {
+  try {
+    const s = await fetch('/api/settings').then(r => r.json());
+    const isOpen = s.is_open === '1';
+    $('statusBadge').textContent = isOpen ? 'Dibuka' : 'Tutup';
+    $('statusBadge').className = isOpen ? 'badge-open' : 'badge-closed';
+    $('closedScreen').classList.toggle('show', !isOpen);
+    $('storeName').textContent = s.store_name || 'Mari Order';
+    $('banner').textContent = s.banner || '';
+  } catch (e) {}
+}, 30000);
+</script>
+</body>
+</html>
